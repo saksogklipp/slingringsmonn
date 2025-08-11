@@ -1,1 +1,115 @@
 
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <title>Agentrapporter i dag (Oslo-tid)</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+    th, td { border: 1px solid #ccc; padding: 4px 8px; }
+    th { background: #f0f0f0; }
+    pre { background: #fafafa; padding: 10px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Agentrapporter i dag (Oslo-tid)</h1>
+  <table id="reportTable">
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Gruppe</th>
+        <th>Queue</th>
+        <th>Samtaler totalt</th>
+        <th>Samtaler besvart</th>
+        <th>Snakktid (totalt)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Rå JSON</h2>
+  <pre id="output">Laster...</pre>
+
+  <script>
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVyYXRvciI6IjAiLCJwYXJ0bmVyIjoiMCIsImN1c3RvbWVyIjoiNCIsImxvZ2luIjoiMCIsImltcGVyc29uYXRvciI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsImxvY2F0aW9uIjoiMCIsInNlc3Npb24iOiI2OTY0ZDg4MS0zMWIwLTQ0YTQtYTlmZC03OTBhYTZmZTIxYjkiLCJjdXN0b21lckd1aWQiOiJmNWZjMGJmMS0wYmM3LTQ5ZDQtYTllNS01MDIyZTljNmNiYjYiLCJsb2dpbkd1aWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJhZG1pbmlzdHJhdG9yVHlwZSI6ImN1c3RvbWVyYWRtaW5pc3RyYXRvciIsInBhcnRuZXJHdWlkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwidG9rZW5JZCI6IjcwODc0OTAwLWFhMmItNDk3MC1hMWM4LTRmYmIzZDIyZjk1MiIsIm5iZiI6MTc1NDkwODA3NywiZXhwIjoxNzg2NTMwNDc3LCJpYXQiOjE3NTQ5MDgwNzcsImlzcyI6Inppc3NvbiIsImF1ZCI6IkFwaSJ9.PzRsugYzNhrCdur5WCiPwvWsC5pQRkfvak2oy9Kf6cA"; // legg inn hele Bearer-token her
+
+    // Lager start/slutt for dagen i Europe/Oslo og konverterer til UTC
+    function getTodayRangeOsloToUTC() {
+      const now = new Date();
+
+      // Hent dato i Oslo-tid
+      const osloFormatter = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "Europe/Oslo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+
+      const parts = osloFormatter.formatToParts(now);
+      const year = parts.find(p => p.type === "year").value;
+      const month = parts.find(p => p.type === "month").value;
+      const day = parts.find(p => p.type === "day").value;
+
+      // Lag datoobjekter i Oslo-tid
+      const startOslo = new Date(`${year}-${month}-${day}T00:00:00+02:00`); // +02:00 for sommertid (justeres automatisk)
+      const endOslo = new Date(`${year}-${month}-${day}T23:59:59+02:00`);
+
+      // Konverter til UTC ISO
+      return {
+        startDate: new Date(startOslo).toISOString(),
+        endDate: new Date(endOslo).toISOString()
+      };
+    }
+
+    const { startDate, endDate } = getTodayRangeOsloToUTC();
+
+    const body = {
+      startDate: startDate,
+      endDate: endDate,
+      period: "ww",
+      groupBy: "dd",
+      hourStart: "08:00",
+      hourEnd: "18:00"
+    };
+
+    fetch("https://app2.wave.wtf/external-api/v1/report-api/agentreports/agent-details-dynamic", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(body)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      populateTable(data);
+    })
+    .catch(err => {
+      document.getElementById("output").textContent = "Feil: " + err;
+    });
+
+    function populateTable(data) {
+      const tbody = document.querySelector("#reportTable tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.agent || ""}</td>
+          <td>${item.agentGroup || ""}</td>
+          <td>${item.queueDesc || ""}</td>
+          <td>${item.callsTot ?? ""}</td>
+          <td>${item.callsAnsweredTot ?? ""}</td>
+          <td>${item.talkTimeTot ?? ""}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+  </script>
+</body>
+</html>
