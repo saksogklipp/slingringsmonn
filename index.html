@@ -1,268 +1,114 @@
-<!doctype html>
-<html lang="nb">
+<!DOCTYPE html>
+<html lang="no">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Agentrapporter – i dag</title>
+  <meta charset="UTF-8">
+  <title>Agentrapporter i dag (Oslo-tid)</title>
   <style>
-    :root { --bg:#0b1020; --panel:#11162a; --muted:#9aa3b2; --fg:#e8ecf3; --accent:#5bc0eb; --ok:#7bd88f; --warn:#ffcc66; --err:#ff7b7b; }
-    html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji"}
-    header{padding:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between;border-bottom:1px solid #1e2746;background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));}
-    .brand{display:flex;align-items:center;gap:10px}
-    .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 30px var(--accent)}
-    .title{font-weight:650;font-size:18px}
-    .muted{color:var(--muted)}
-    main{padding:20px;display:grid;gap:16px}
-    .panel{background:var(--panel);border:1px solid #1e2746;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    .card{flex:1 1 180px;padding:16px}
-    .card h3{margin:0 0 6px 0;font-size:13px;color:var(--muted);font-weight:600}
-    .card .num{font-feature-settings:"tnum" 1;letter-spacing:.2px;font-size:28px;font-weight:700}
-    .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px}
-    input,select,button{background:#0e1430;border:1px solid #253056;color:var(--fg);padding:9px 12px;border-radius:10px}
-    button{cursor:pointer}
-    button.primary{background:var(--accent);color:#08101f;border-color:transparent;font-weight:700}
-    table{width:100%;border-collapse:separate;border-spacing:0 10px}
-    th,td{padding:12px 14px;text-align:left}
-    thead th{color:var(--muted);font-weight:600;font-size:12px}
-    tbody tr{background:#0d1328;border:1px solid #1e2746}
-    tbody td:first-child, thead th:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
-    tbody td:last-child, thead th:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .pill{font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid #31406b;background:#11183a;color:#c6d0e9}
-    .footer{padding:16px;color:var(--muted);font-size:12px}
-    pre{max-height:400px;overflow:auto;background:#0b1124;padding:14px;border-radius:12px;border:1px solid #1e2746}
-    .danger{color:var(--err)}
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1em; }
+    th, td { border: 1px solid #ccc; padding: 4px 8px; }
+    th { background: #f0f0f0; }
+    pre { background: #fafafa; padding: 10px; border: 1px solid #ddd; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="dot"></div>
-      <div class="title">Agentrapporter – <span id="date-label"></span></div>
-    </div>
-    <div class="muted">Tidssone: Europe/Oslo</div>
-  </header>
+  <h1>Agentrapporter i dag (Oslo-tid)</h1>
+  <table id="reportTable">
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Gruppe</th>
+        <th>Queue</th>
+        <th>Samtaler totalt</th>
+        <th>Samtaler besvart</th>
+        <th>Snakktid (totalt)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <main>
-    <section class="panel row">
-      <div class="card">
-        <h3>Antall (alle)</h3>
-        <div class="num" id="count-all">–</div>
-      </div>
-      <div class="card">
-        <h3>Antall (i dag)</h3>
-        <div class="num" id="count-today">–</div>
-      </div>
-      <div class="card">
-        <h3>Felt brukt for dato</h3>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select id="date-field"></select>
-          <span class="muted" id="auto-field-note"></span>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="controls">
-        <button id="reload" class="primary">Last data</button>
-        <label class="muted">Søk: <input id="search" placeholder="filtrer tekst …" /></label>
-        <label class="muted">Vis rådata <input type="checkbox" id="toggle-raw" /></label>
-        <span class="muted" id="status">Klar</span>
-      </div>
-      <div id="table-wrap" style="padding:0 10px 10px 10px"></div>
-      <div id="raw-wrap" style="display:none;padding:12px 12px 0 12px">
-        <pre id="raw"></pre>
-      </div>
-      <div class="footer">
-        <strong>OBS!</strong> Denne demoen bruker <span class="danger">Bearer-token i klienten</span>. For produksjon anbefales en server/proxy.
-      </div>
-    </section>
-  </main>
+  <h2>Rå JSON</h2>
+  <pre id="output">Laster...</pre>
 
   <script>
-    // ======== KONFIG ========
-    const API_URL = "https://app2.wave.wtf/external-api/v1/report-api/agentreports/agent-details-dynamic";
-    const BEARER = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVyYXRvciI6IjAiLCJwYXJ0bmVyIjoiMCIsImN1c3RvbWVyIjoiNCIsImxvZ2luIjoiMCIsImltcGVyc29uYXRvciI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsImxvY2F0aW9uIjoiMCIsInNlc3Npb24iOiI2OTY0ZDg4MS0zMWIwLTQ0YTQtYTlmZC03OTBhYTZmZTIxYjkiLCJjdXN0b21lckd1aWQiOiJmNWZjMGJmMS0wYmM3LTQ5ZDQtYTllNS01MDIyZTljNmNiYjYiLCJsb2dpbkd1aWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJhZG1pbmlzdHJhdG9yVHlwZSI6ImN1c3RvbWVyYWRtaW5pc3RyYXRvciIsInBhcnRuZXJHdWlkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwidG9rZW5JZCI6IjcwODc0OTAwLWFhMmItNDk3MC1hMWM4LTRmYmIzZDIyZjk1MiIsIm5iZiI6MTc1NDkwODA3NywiZXhwIjoxNzg2NTMwNDc3LCJpYXQiOjE3NTQ5MDgwNzcsImlzcyI6Inppc3NvbiIsImF1ZCI6IkFwaSJ9.PzRsugYzNhrCdur5WCiPwvWsC5pQRkfvak2oy9Kf6cA";
-    const TIMEZONE = "Europe/Oslo";
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcGVyYXRvciI6IjAiLCJwYXJ0bmVyIjoiMCIsImN1c3RvbWVyIjoiNCIsImxvZ2luIjoiMCIsImltcGVyc29uYXRvciI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsImxvY2F0aW9uIjoiMCIsInNlc3Npb24iOiI2OTY0ZDg4MS0zMWIwLTQ0YTQtYTlmZC03OTBhYTZmZTIxYjkiLCJjdXN0b21lckd1aWQiOiJmNWZjMGJmMS0wYmM3LTQ5ZDQtYTllNS01MDIyZTljNmNiYjYiLCJsb2dpbkd1aWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJhZG1pbmlzdHJhdG9yVHlwZSI6ImN1c3RvbWVyYWRtaW5pc3RyYXRvciIsInBhcnRuZXJHdWlkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIiwidG9rZW5JZCI6IjcwODc0OTAwLWFhMmItNDk3MC1hMWM4LTRmYmIzZDIyZjk1MiIsIm5iZiI6MTc1NDkwODA3NywiZXhwIjoxNzg2NTMwNDc3LCJpYXQiOjE3NTQ5MDgwNzcsImlzcyI6Inppc3NvbiIsImF1ZCI6IkFwaSJ9.PzRsugYzNhrCdur5WCiPwvWsC5pQRkfvak2oy9Kf6cA"; // legg inn hele Bearer-token her
 
-    // ======== HJELPERE ========
-    function todayBoundsInTZ(tz = TIMEZONE){
+    // Lager start/slutt for dagen i Europe/Oslo og konverterer til UTC
+    function getTodayRangeOsloToUTC() {
       const now = new Date();
-      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(now);
-      const y = Number(parts.find(p=>p.type==='year').value);
-      const m = Number(parts.find(p=>p.type==='month').value);
-      const d = Number(parts.find(p=>p.type==='day').value);
-      const start = new Date(Date.UTC(y, m-1, d, 0,0,0,0));
-      const end   = new Date(Date.UTC(y, m-1, d, 23,59,59,999));
-      return { start, end, label: `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}.${y}` };
-    }
 
-    function parseMaybeDate(v){
-      if(typeof v !== 'string') return null;
-      // quick heuristics for ISO-like strings
-      const isoLike = /\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}(:\d{2})?(?:\.\d+)?(?:Z|[+\-]\d{2}:?\d{2})?/;
-      const dateOnly = /\d{4}-\d{2}-\d{2}$/;
-      if(!isoLike.test(v) && !dateOnly.test(v)) return null;
-      const t = Date.parse(v);
-      return isNaN(t) ? null : new Date(t);
-    }
-
-    function discoverDateFields(rows){
-      const keys = new Set();
-      const candidates = new Map(); // key -> count
-      const prefer = ['startedAt','startTime','start','createdAt','created','timestamp','time','date','datetime','answeredAt','closedAt','updatedAt'];
-      rows.slice(0,50).forEach(r=>collectKeys(r, keys));
-      const keyList = Array.from(keys);
-      for(const key of keyList){
-        let ok=0; let total=0;
-        for(const r of rows){
-          const v = deepGet(r, key);
-          if(v!==undefined){ total++; const d = parseMaybeDate(v); if(d) ok++; }
-        }
-        if(ok && ok/Math.max(1,total) > 0.6) candidates.set(key, ok);
-      }
-      const sorted = Array.from(candidates.keys()).sort((a,b)=>{
-        const ai = prefer.findIndex(k=>k.toLowerCase()===a.toLowerCase());
-        const bi = prefer.findIndex(k=>k.toLowerCase()===b.toLowerCase());
-        if(ai!==-1 || bi!==-1){ return (ai===-1?999:ai) - (bi===-1?999:bi);} 
-        return (candidates.get(b)||0)-(candidates.get(a)||0);
+      // Hent dato i Oslo-tid
+      const osloFormatter = new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "Europe/Oslo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
       });
-      return sorted;
+
+      const parts = osloFormatter.formatToParts(now);
+      const year = parts.find(p => p.type === "year").value;
+      const month = parts.find(p => p.type === "month").value;
+      const day = parts.find(p => p.type === "day").value;
+
+      // Lag datoobjekter i Oslo-tid
+      const startOslo = new Date(`${year}-${month}-${day}T00:00:00+02:00`); // +02:00 for sommertid (justeres automatisk)
+      const endOslo = new Date(`${year}-${month}-${day}T23:59:59+02:00`);
+
+      // Konverter til UTC ISO
+      return {
+        startDate: new Date(startOslo).toISOString(),
+        endDate: new Date(endOslo).toISOString()
+      };
     }
 
-    function collectKeys(obj, set, prefix=""){
-      if(Array.isArray(obj)){
-        obj.forEach((v,i)=>collectKeys(v,set,`${prefix}[${i}]`));
-      } else if(obj && typeof obj === 'object'){
-        for(const k of Object.keys(obj)){
-          const path = prefix ? `${prefix}.${k}` : k;
-          set.add(path);
-          collectKeys(obj[k], set, path);
-        }
-      }
-    }
+    const { startDate, endDate } = getTodayRangeOsloToUTC();
 
-    function deepGet(obj, path){
-      return path.split('.').reduce((acc,part)=>{
-        const idxMatch = part.match(/^(.*)\[(\d+)\]$/);
-        if(idxMatch){ const key = idxMatch[1]; const idx = Number(idxMatch[2]); acc = acc?.[key]; return Array.isArray(acc)? acc[idx] : undefined; }
-        return acc?.[part];
-      }, obj);
-    }
+    const body = {
+      startDate: startDate,
+      endDate: endDate,
+      period: "ww",
+      groupBy: "dd",
+      hourStart: "08:00",
+      hourEnd: "18:00"
+    };
 
-    function filterByToday(rows, field, bounds){
-      const {start,end} = bounds;
-      return rows.filter(r=>{
-        let v = field ? deepGet(r, field) : undefined;
-        let d = parseMaybeDate(v);
-        if(!d){
-          // fallback: scan first date-like value in object
-          let found=null;
-          (function scan(o){
-            if(found) return; 
-            if(Array.isArray(o)) return o.forEach(scan);
-            if(o && typeof o==='object') return Object.values(o).forEach(scan);
-            const maybe = parseMaybeDate(o);
-            if(maybe) found = maybe;
-          })(r);
-          d = found;
-        }
-        if(!d) return false;
-        const t = d.getTime();
-        return t >= start.getTime() && t <= end.getTime();
-      });
-    }
-
-    function createTable(rows){
-      if(!rows.length) return '<div class="muted" style="padding:16px">Ingen rader for i dag.</div>';
-      // pick columns: up to 8 keys from first row (flatten shallow)
-      const cols = Array.from(new Set(Object.keys(rows[0]))).slice(0,8);
-      const head = '<thead><tr>' + cols.map(c=>`<th>${escapeHtml(c)}</th>`).join('') + '</tr></thead>';
-      const body = '<tbody>' + rows.map(r=>{
-        return '<tr>' + cols.map(c=>`<td>${formatCell(r[c])}</td>`).join('') + '</tr>';
-      }).join('') + '</tbody>';
-      return `<table>${head}${body}</table>`;
-    }
-
-    function formatCell(v){
-      if(v == null) return '<span class="muted">–</span>';
-      if(typeof v === 'string'){
-        const d = parseMaybeDate(v);
-        if(d){
-          const s = new Intl.DateTimeFormat('nb-NO', { timeZone: TIMEZONE, dateStyle:'short', timeStyle:'medium'}).format(d);
-          return `<span class="pill">${s}</span>`;
-        }
-        return escapeHtml(v);
-      }
-      if(typeof v === 'number') return String(v);
-      if(typeof v === 'boolean') return v? '✅' : '—';
-      return `<code>${escapeHtml(JSON.stringify(v))}</code>`;
-    }
-
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]));
-    }
-
-    async function load(){
-      const status = document.getElementById('status');
-      const raw = document.getElementById('raw');
-      status.textContent = 'Henter …';
-      try{
-        const res = await fetch(API_URL, { headers: { Authorization: `Bearer ${BEARER}` }});
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const rows = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : (data?.data || []));
-        window.__ALL_ROWS = rows;
-        raw.textContent = JSON.stringify(data, null, 2);
-        hydrate();
-        status.textContent = `OK • ${rows.length} elementer`;
-      }catch(err){
-        status.textContent = `Feil: ${err.message} (sjekk CORS og token)`;
-        console.error(err);
-      }
-    }
-
-    function hydrate(){
-      const bounds = todayBoundsInTZ();
-      document.getElementById('date-label').textContent = bounds.label;
-      const all = window.__ALL_ROWS || [];
-      document.getElementById('count-all').textContent = all.length;
-
-      // date-field discovery
-      const fields = discoverDateFields(all);
-      const select = document.getElementById('date-field');
-      select.innerHTML = '';
-      const optAuto = document.createElement('option');
-      optAuto.value = '';
-      optAuto.textContent = '(auto)';
-      select.appendChild(optAuto);
-      fields.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; select.appendChild(o); });
-      document.getElementById('auto-field-note').textContent = fields[0] ? `foreslår: ${fields[0]}` : 'fant ingen opplagte felt';
-
-      renderTable();
-    }
-
-    function renderTable(){
-      const bounds = todayBoundsInTZ();
-      const all = window.__ALL_ROWS || [];
-      const field = document.getElementById('date-field').value || null;
-      const filtered = filterByToday(all, field, bounds);
-      document.getElementById('count-today').textContent = filtered.length;
-      const q = (document.getElementById('search').value||'').toLowerCase();
-      const searched = q ? filtered.filter(r => JSON.stringify(r).toLowerCase().includes(q)) : filtered;
-      document.getElementById('table-wrap').innerHTML = createTable(searched);
-    }
-
-    // ======== UI HANDLERS ========
-    document.getElementById('reload').addEventListener('click', load);
-    document.getElementById('date-field').addEventListener('change', renderTable);
-    document.getElementById('search').addEventListener('input', renderTable);
-    document.getElementById('toggle-raw').addEventListener('change', (e)=>{
-      document.getElementById('raw-wrap').style.display = e.target.checked ? 'block' : 'none';
+    fetch("https://app2.wave.wtf/external-api/v1/report-api/agentreports/agent-details-dynamic", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(body)
+    })
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      populateTable(data);
+    })
+    .catch(err => {
+      document.getElementById("output").textContent = "Feil: " + err;
     });
 
-    // Automatisk last ved start
-    load();
+    function populateTable(data) {
+      const tbody = document.querySelector("#reportTable tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.agent || ""}</td>
+          <td>${item.agentGroup || ""}</td>
+          <td>${item.queueDesc || ""}</td>
+          <td>${item.callsTot ?? ""}</td>
+          <td>${item.callsAnsweredTot ?? ""}</td>
+          <td>${item.talkTimeTot ?? ""}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
   </script>
 </body>
 </html>
