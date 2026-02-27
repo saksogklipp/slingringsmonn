@@ -1,0 +1,30 @@
+﻿{
+    "name":  "slingringsmonn",
+    "version":  "1.0.0",
+    "description":  "",
+    "main":  "index.js",
+    "scripts":  {
+                    "test:e2e":  "playwright test",
+                    "test:e2e:functionality":  "playwright test tests/epinova.functionality.spec.ts",
+                    "test:e2e:examples":  "playwright test tests/epinova.examples.spec.ts",
+                    "test:e2e:headed":  "playwright test --headed"
+                },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/saksogklipp/slingringsmonn.git"
+                   },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "commonjs",
+    "bugs":  {
+                 "url":  "https://github.com/saksogklipp/slingringsmonn/issues"
+             },
+    "homepage":  "https://github.com/saksogklipp/slingringsmonn#readme",
+    "devDependencies":  {
+                            "@playwright/test":  "^1.58.2",
+                            "@types/node":  "^25.3.2"
+                        }
+}
