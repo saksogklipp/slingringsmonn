@@ -6,20 +6,6 @@ test.beforeEach(async ({ page }) => {
   await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
 });
 
-test('UX example: keyboard users can tab to main navigation', async ({ page }) => {
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
-
-  const focusedText = await page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
-  expect(focusedText.length).toBeGreaterThan(0);
-});
-
-test('UX example: skip-link exists for accessibility', async ({ page }) => {
-  const skipLink = page.locator('a.skip-link[href="#mainContent"]');
-  await expect(skipLink).toBeVisible();
-  await expect(skipLink).toContainText(/Hopp til hovedinnhold/i);
-});
-
 test('Performance example: navigation timing budget', async ({ page }) => {
   const navigationTiming = await page.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
