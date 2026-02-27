@@ -4,10 +4,10 @@
     "description":  "",
     "main":  "index.js",
     "scripts":  {
-                    "test:e2e":  "playwright test",
-                    "test:e2e:functionality":  "playwright test tests/epinova.functionality.spec.ts",
-                    "test:e2e:examples":  "playwright test tests/epinova.examples.spec.ts",
-                    "test:e2e:headed":  "playwright test --headed"
+                    "test:e2e":  "playwright test -c testSuite/epinova/playwright.config.ts",
+                    "test:e2e:functionality":  "playwright test -c testSuite/epinova/playwright.config.ts testSuite/epinova/tests/epinova.functionality.spec.ts",
+                    "test:e2e:examples":  "playwright test -c testSuite/epinova/playwright.config.ts testSuite/epinova/tests/epinova.examples.spec.ts",
+                    "test:e2e:headed":  "playwright test -c testSuite/epinova/playwright.config.ts --headed"
                 },
     "repository":  {
                        "type":  "git",

@@ -1,8 +1,7 @@
-
-# Playwright
+﻿# Playwright
 node_modules/
-/test-results/
-/playwright-report/
+/testSuite/epinova/test-results/
+/testSuite/epinova/playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
