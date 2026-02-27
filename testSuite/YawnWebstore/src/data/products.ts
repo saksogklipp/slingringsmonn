@@ -21,7 +21,7 @@ export const products: Product[] = [
   {
     id: 'ram-vengeance-32',
     brand: 'Corsair',
-    name: 'Vengeance DDR5 32GB Kit',
+    name: 'Vengeance DDR5',
     description: '2x16GB DDR5 memory kit with optimized timings for gaming systems.',
     price: 179,
     imageUrl: 'https://images.unsplash.com/photo-1562976540-1502c2145186?auto=format&fit=crop&w=1200&q=80',
@@ -29,7 +29,7 @@ export const products: Product[] = [
   {
     id: 'ram-gskill-64',
     brand: 'G.Skill',
-    name: 'Trident Z5 DDR5 64GB Kit',
+    name: 'Trident Z5 DDR5',
     description: '2x32GB high-capacity memory kit for multitasking and creator workloads.',
     price: 329,
     imageUrl: 'https://images.pexels.com/photos/2582937/pexels-photo-2582937.jpeg?auto=compress&cs=tinysrgb&w=1200',

@@ -12,7 +12,7 @@ export const renderProductListPage = (): string => {
           <h3>${product.brand} ${product.name}</h3>
           <p class="muted">${product.description}</p>
           <p class="price">$${product.price.toFixed(2)}</p>
-          <button class="primary" data-action="add-to-cart" data-product-id="${product.id}" data-testid="add-${product.id}">
+          <button class="card-button" data-action="add-to-cart" data-product-id="${product.id}" data-testid="add-${product.id}">
             Add to Cart
           </button>
         </div>

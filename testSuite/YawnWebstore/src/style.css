@@ -85,6 +85,7 @@ button.primary,
   border-color: var(--brand);
 }
 
+
 button.danger {
   background: #fff;
   border-color: #f3b1b1;
@@ -93,7 +94,7 @@ button.danger {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -102,6 +103,9 @@ button.danger {
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
+  flex: 1;
+  flex-direction: column;
+  display: flex;
 }
 
 .card img {
@@ -112,13 +116,21 @@ button.danger {
 }
 
 .card-content {
+  flex: 1;
+  flex-direction: column;
+  display: flex;
   padding: 0.8rem;
+  margin-top: auto;
+}
+
+.card-button {
+  padding: 0.8rem;
+  margin-top: auto;
 }
 
 .price {
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 0.25rem 0 0.75rem;
 }
 
 .muted {
