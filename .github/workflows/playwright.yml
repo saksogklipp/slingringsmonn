@@ -1,27 +1,60 @@
-name: Playwright Tests
+name: Epinova Playwright Tests
+
 on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Choose which Epinova tests to run"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - examples
+          - functionality
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    paths:
+      - "testSuite/epinova/**"
+      - "testSuite/package.json"
+      - "testSuite/package-lock.json"
+      - ".github/workflows/playwright.yml"
+
 jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: testSuite
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: testSuite/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Epinova tests
+        run: |
+          if [ "${{ github.event.inputs.suite }}" = "examples" ]; then
+            npx playwright test -c epinova/playwright.config.ts epinova/tests/epinova.examples.spec.ts
+          elif [ "${{ github.event.inputs.suite }}" = "functionality" ]; then
+            npx playwright test -c epinova/playwright.config.ts epinova/tests/epinova.functionality.spec.ts
+          else
+            npx playwright test -c epinova/playwright.config.ts
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: epinova-playwright-report-${{ github.run_number }}
+          path: testSuite/epinova/playwright-report/
+          retention-days: 30
