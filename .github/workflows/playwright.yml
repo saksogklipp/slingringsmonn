@@ -45,11 +45,11 @@ jobs:
       - name: Run Epinova tests
         run: |
           if [ "${{ github.event.inputs.suite }}" = "examples" ]; then
-            npx playwright test -c epinova/playwright.config.ts epinova/tests/epinova.examples.spec.ts
+            npx playwright test -c epinova/playwright.config.ts --project=chromium epinova/tests/epinova.examples.spec.ts
           elif [ "${{ github.event.inputs.suite }}" = "functionality" ]; then
-            npx playwright test -c epinova/playwright.config.ts epinova/tests/epinova.functionality.spec.ts
+            npx playwright test -c epinova/playwright.config.ts --project=chromium epinova/tests/epinova.functionality.spec.ts
           else
-            npx playwright test -c epinova/playwright.config.ts
+            npx playwright test -c epinova/playwright.config.ts --project=chromium
           fi
 
       - uses: actions/upload-artifact@v4
